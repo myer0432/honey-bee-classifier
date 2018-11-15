@@ -1,5 +1,4 @@
-# honey-bee-classifier
-## Problem Description
+## Description
 Comparing different supervised learning approaches to a image classification problem through a neural network, a convolutional neural net, and an SVM.
 
 ## Dataset
