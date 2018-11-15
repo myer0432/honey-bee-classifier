@@ -1,7 +1,7 @@
 ## Description
 Comparing different supervised learning approaches to a image classification problem through a neural network, a convolutional neural net, and an SVM.
 
-## Dataset
+## Problem and Dataset
 https://www.kaggle.com/jenny18/honey-bee-annotated-images
 
 ## Authors
