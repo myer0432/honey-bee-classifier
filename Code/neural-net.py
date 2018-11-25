@@ -12,7 +12,7 @@ def make_model(bee_data):
     print("Training model...")
     model = Sequential()
     model.add(Flatten())
-    model.add(Dense(1, activation=tf.nn.relu))
+    model.add(Dense(3, activation=tf.nn.relu))
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
     model.fit(bee_data.training_data, bee_data.training_targets, epochs=150, batch_size=10)
     print("Scoring...")

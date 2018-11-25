@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 import imageio
+from random import shuffle
 
 class data:
     def __init__(self, csv_path, target_feature, img_path):
@@ -13,7 +14,6 @@ class data:
         bee_imgs = bee_imgs / 255.0
         # plt.imshow(bee_final_imgs[0])
         # plt.show()
-        bee_csv = bee_csv.values
         # Get just species targets
         bee_targets = bee_csv[:,target_feature]
         # Get classes
@@ -25,12 +25,15 @@ class data:
 
     def load_data(self, csv_path, img_path):
         print("Loading data...")
-        bee_csv = pd.read_csv(csv_path)
-        filenames = os.listdir(img_path)
-        bee_imgs = np.empty((len(filenames)), dtype=np.object)
+        bee_csv = pd.read_csv(csv_path) # Read data csv
+        bee_csv = bee_csv.values # Convert to numpy array
+        bee_csv = bee_csv[np.argsort(bee_csv[:, 0])[::-1]] # Sort by first column = name of image
+        filenames = os.listdir(img_path) # Get image paths
+        bee_data = np.empty((len(filenames)), dtype=np.object)
         for i in range(len(filenames)):
-            bee_imgs[i] = imageio.imread(img_path+"/"+filenames[i])
-        return bee_csv, bee_imgs
+            bee_data[i] = np.append(bee_csv[i], imageio.imread(img_path+"/"+filenames[i]))
+        shuffle(bee_data)
+        return bee_data, bee_data[:,-1]
 
     def pad_data(self, bee_imgs):
         print("Padding...")
