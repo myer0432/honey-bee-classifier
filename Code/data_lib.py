@@ -4,16 +4,47 @@ import numpy as np
 import pandas as pd
 import os
 import imageio
+<<<<<<< Updated upstream
 from PIL import Image
 import matplotlib.pyplot as plt
+=======
+from sklearn.utils import shuffle
+>>>>>>> Stashed changes
 
-def load_data(csv_path, img_path):
+def load_data(csv_path, img_path, size_of_set):
     bee_csv = pd.read_csv(csv_path)
     filenames = os.listdir(img_path)
+<<<<<<< Updated upstream
     bee_imgs = np.empty((len(filenames)), dtype=np.object)
     for i in range(len(filenames)):
         # print(filenames[i])
         bee_imgs[i] = imageio.imread(img_path+"/"+filenames[i])
+=======
+    bee_imgs = np.empty(1, dtype=np.object)
+
+    file_count = 0
+    object_temp = np.empty(1, dtype=np.object)
+    while file_count < len(filenames):
+        print(filenames[file_count])
+
+        test_array = imageio.imread(img_path+"/"+filenames[file_count])
+        object_temp[0] = test_array
+
+        if test_array.shape[2] == 4:
+            bee_csv = bee_csv.drop(file_count, axis=0)
+            file_count += 1
+        elif file_count == 0:
+            bee_imgs[0] = test_array
+            file_count += 1
+        else:
+            bee_imgs = np.concatenate((bee_imgs, object_temp), axis=0)
+            file_count += 1
+
+    bee_csv, bee_imgs = shuffle(bee_csv, bee_imgs, random_state=0)
+    size_wanted = int(size_of_set*bee_csv.shape[0])
+    bee_csv = bee_csv[0:size_wanted]
+    bee_imgs = bee_imgs[0:size_wanted]
+>>>>>>> Stashed changes
 
     return bee_csv, bee_imgs
 
@@ -68,6 +99,7 @@ def find_smallest_dimensions(img_path, filenames):
 
     return width, height
 
+<<<<<<< Updated upstream
 # def pad_data(bee_imgs):
 #     largest_first_dim = 0
 #     largest_second_dim = 0
@@ -98,3 +130,17 @@ def find_smallest_dimensions(img_path, filenames):
 #     # print()
 #
 #     return bee_imgs
+=======
+    return bee_imgs
+
+def split_data(data, labels, ratio):
+    bound_1 = int(data.shape[0]*ratio)
+    known_samples = data[0:bound_1]
+    known_labels = labels[0:bound_1]
+
+    unknown_samples = data[bound_1:data.shape[0]]
+    unknown_labels = labels[bound_1:labels.shape[0]]
+
+    return known_samples, known_labels, unknown_samples, unknown_labels
+    
+>>>>>>> Stashed changes
