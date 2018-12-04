@@ -2,20 +2,21 @@
 
 from data_lib import *
 import matplotlib.pyplot as plt
+import imageio
 
 def main():
     csv_path = "../Data/bee_data.csv"
     img_path = "../Data/bee_imgs"
+    resized_img_path = "../Data/resized_bee_imgs"
 
-    bee_csv, bee_imgs = load_data(csv_path, img_path)
+    # This resizes the images using a LANCZOS filter and places them in the
+    # resized_bee_imgs data directory
+    resize_images(img_path, resized_img_path)
 
-    print(bee_csv.shape)
-    print(bee_imgs.shape)
-    print(bee_imgs[0].shape)
+    # This uses Will's code to load all the images up
+    bee_csv, bee_imgs = load_data(csv_path, resized_img_path)
 
-    bee_final_imgs = pad_data(bee_imgs)
-
-    plt.imshow(bee_final_imgs[0])
-    plt.show()
+    # Sanity check to look at the first image before and after resizings
+    display_first_image(img_path, resized_img_path)
 
 main()
