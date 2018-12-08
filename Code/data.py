@@ -9,25 +9,80 @@ class data:
     def __init__(self, csv_path, target_feature, img_path):
         # Load data
         print("Loading data...")
-        bee_csv, bee_imgs = self.load_data(csv_path, img_path)
-        # Get just species targets
-        bee_targets = bee_csv[:,target_feature]
-        # Get classes
-        self.get_classes(bee_targets)
+        bee_targets, bee_imgs = self.load_data(csv_path, img_path, target_feature)
+
+        self.bee_targets = bee_targets
+        self.bee_imgs = bee_imgs
+
+        # # Get just species targets
+        # bee_targets = bee_csv[:,target_feature]
+        #
+        # # Get classes
+        # self.get_classes(bee_targets)
+        #
+        # bee_num_targets = np.empty(len(bee_targets), dtype = int)
+        #
+        # for i in range(len(bee_targets)):
+        #     bee_num_targets[i] = self.classes.index(bee_targets[i])
+        #
+        # bee_targets = bee_num_targets
+
+        # np_bee_targets = np.empty(len(bee_targets))
+        #
+        # for i in range(len(bee_targets)):
+        #     np_bee_targets[i] = bee_targets[i]
+        #
+        # print("np shape: ", np_bee_targets.shape)
+        # print("np first: ", np_bee_targets[0])
+
         # Split data
         self.split(bee_imgs, bee_targets)
 
-    def load_data(self, csv_path, img_path):
-        # Load targets (bee classification data)
-        bee_csv = pd.read_csv(csv_path) # Read data csv
-        bee_csv = bee_csv.values # Convert to numpy array
-        bee_csv = bee_csv[np.argsort(bee_csv[:, 0])[::-1]] # Sort by first column = name of image
-        shuffle(bee_csv) # Shuffle data
-        # Load predictor data (images)
-        bee_imgs = np.empty(len(bee_csv), dtype=object)
-        for i in range(len(bee_csv)):
-            bee_imgs[i] = imageio.imread(img_path+"/"+bee_csv[i,0]) # First item in bees is image name
-        return bee_csv, bee_imgs
+
+
+    def load_data(self, csv_path, img_path, target_feature):
+        # # Load targets (bee classification data)
+        # bee_csv = pd.read_csv(csv_path) # Read data csv
+        # bee_csv = bee_csv.values # Convert to numpy array
+        # bee_csv = bee_csv[np.argsort(bee_csv[:, 0])[::-1]] # Sort by first column = name of image
+        # shuffle(bee_csv) # Shuffle data
+        #
+        # # Load predictor data (images)
+        # bee_imgs = np.empty(len(bee_csv), dtype=object)
+        # for i in range(len(bee_csv)):
+        #     bee_imgs[i] = imageio.imread(img_path+"/"+bee_csv[i,0]) # First item in bees is image name
+        #
+        # # convert imageio.core.util.array to numpy.ndarray [disgusting]
+        # np_bee_imgs = np.empty((len(bee_imgs), 77, 66, 3), dtype=int)
+        #
+        # for i in np.arange(len(bee_imgs)):
+        #     for j in np.arange(77):
+        #         for k in np.arange(66):
+        #             for l in np.arange(3):
+        #                 np_bee_imgs[i,j,k,l] = bee_imgs[i][j,k,l]
+        #
+        # print(np_bee_imgs.shape)
+        # np.save("bee_imgs_ndarray.npy", np_bee_imgs)
+        #
+        # # Get just species targets
+        # bee_targets = bee_csv[:,target_feature]
+        #
+        # # Get classes
+        # self.get_classes(bee_targets)
+        #
+        # bee_num_targets = np.empty(len(bee_targets), dtype = int)
+        #
+        # for i in range(len(bee_targets)):
+        #     bee_num_targets[i] = self.classes.index(bee_targets[i])
+        #
+        # bee_targets = bee_num_targets
+        #
+        # np.save("bee_targets_ndarray.npy", bee_targets)
+
+        np_bee_imgs = np.load("bee_imgs_ndarray.npy")
+        bee_targets = np.load("bee_targets_ndarray.npy")
+
+        return bee_targets, np_bee_imgs
 
     def get_classes(self, bee_targets):
         # Get unique types of species
