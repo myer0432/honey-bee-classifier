@@ -9,15 +9,13 @@ import matplotlib.pyplot as plt
 from data import data
 
 def make_model(bee_data):
+    # Make model
     print("Training model...")
     model = keras.Sequential([
         keras.layers.Flatten(input_shape=(28, 28)),
         keras.layers.Dense(128, activation=tf.nn.relu),
-        keras.layers.Dense(10, activation=tf.nn.softmax)
-    ])
-    model.compile(optimizer=tf.train.AdamOptimizer(),
-              loss='sparse_categorical_crossentropy',
-              metrics=['accuracy'])
+        keras.layers.Dense(10, activation=tf.nn.softmax)])
+    model.compile(optimizer=tf.train.AdamOptimizer(), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     model.fit(bee_data.training_data, bee_data.training_targets, epochs=5)
     print("Scoring...")
     scores = model.evaluate(bee_data.validation_data, bee_data.validation_targets)
