@@ -61,8 +61,8 @@ class data:
 
     # Load from previously generated numpy arrays
     def load_from_array(self):
-        np_bee_imgs = np.load("../Data/bee_np_arrays/bee_imgs_ndarray.npy")
-        bee_targets = np.load("../Data/bee_np_arrays/bee_targets_ndarray.npy")
+        np_bee_imgs = np.load("../Data/bee_imgs_ndarray.npy")
+        bee_targets = np.load("../Data/bee_targets_ndarray.npy")
         return bee_targets, np_bee_imgs
 
     # Get classes for target values
