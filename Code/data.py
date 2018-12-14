@@ -79,9 +79,11 @@ class data:
         print("Splitting data...")
         self.training_data = bee_imgs[:int(len(bee_imgs)*.6)]
         self.validation_data = bee_imgs[int(len(bee_imgs)*.6):int(len(bee_imgs)*.8)]
+        self.full_training_data = bee_imgs[:int(len(bee_imgs)*.8)]
         self.testing_data = bee_imgs[int(len(bee_imgs)*.8):]
         self.training_targets = bee_targets[:int(len(bee_targets)*.6)]
         self.validation_targets = bee_targets[int(len(bee_targets)*.6):int(len(bee_targets)*.8)]
+        self.full_training_targets = bee_targets[:int(len(bee_imgs)*.8)]
         self.testing_targets = bee_targets[int(len(bee_targets)*.8):]
 
     # To string

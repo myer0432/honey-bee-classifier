@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Dense, Flatten, Conv2D, MaxPooling2D
+from keras.layers import Dense, Flatten, Activation, Conv2D, MaxPooling2D
 from keras import metrics
 import tensorflow as tf
 from tensorflow import keras
@@ -8,8 +8,16 @@ import matplotlib.pyplot as plt
 from random import shuffle
 import matplotlib.pyplot as plt
 from data import data
+from ann_custom_layer import ann_dense
 import itertools
 from keras.optimizers import SGD
+
+# Mode: 0 = ANN, 1 = CNN
+MODE = 0
+EPOCHS = 50
+RUNS = 1
+LRATES = [1e-4, 1e-10, 1e-14, 1e-18]
+BSIZES = [32]
 
 #########
 # Model #
@@ -21,10 +29,12 @@ def make_model(learning_rate):
     # Flatten layer
     model.add(Flatten())
     # 4 dense layers (64, 64, 64, 7)
+    model.add(ann_dense(64))
     model.add(Dense(units=64, activation='relu', input_shape=(77, 66, 3,))) # add input layer
-    model.add(Dense(units=64, activation='relu')) # add layer
+    #model.add(Dense(units=64, activation='relu')) # add layer
     model.add(Dense(units=64, activation='relu')) # add layer
     model.add(Dense(units=7, activation='sigmoid')) # add output layer
+    model.add(Activation('softmax'))
     # Compile
     opt = SGD(lr = learning_rate)
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
@@ -52,9 +62,9 @@ def make_conv_model(learning_rate):
     return model
 
 # Train the model
-def train_model(model, x_train, y_train, training_batch_size, training_epochs, graph = False):
+def train_model(model, x_train, y_train, training_batch_size, EPOCHS, graph = False):
     # Fit the model
-    history = model.fit(x_train, y_train, epochs = training_epochs, batch_size = training_batch_size)
+    history = model.fit(x_train, y_train, epochs = EPOCHS, batch_size = training_batch_size)
     # Graph the model if specified
     if graph:
         for metric in history.history.keys():
@@ -68,8 +78,6 @@ def train_model(model, x_train, y_train, training_batch_size, training_epochs, g
 # Evaluate the model
 def eval_model(model, x_set, y_set):
     loss_and_metrics = model.evaluate(x_set, y_set, batch_size=128)
-    # classes = model.predict(x_set, batch_size=128)
-    print("eval_model set metrics:\n", loss_and_metrics)
     return loss_and_metrics
 
  # One hot encoding
@@ -120,18 +128,10 @@ def plot_all_training(all_histories):
     plt.show()
 
 # Average evaluations and accuracies
-def ave_evals(evals):
-    # Populate a
-    # total_eval = np.array([np.asarray(evals[0])])
-    # for i in np.arange(1, len(evals)):
-    #     total_eval = np.concatenate((total_eval, np.array([np.asarray(evals[i])])))
-    # total_eval = np.array(evals)
-
-    # Pretty sure that the code above can be replaced with this line below
-    # Keeping code above until we're sure
-    ave_eval = np.average(total_eval, axis = 0)
-    print("Average Loss and Accuracy: ", ave_eval)
-    return ave_eval[1]
+def avg_evals(evals):
+    avg_eval = np.average(evals, axis = 0)
+    print("Average loss and accuracy on validation data:", avg_eval)
+    return avg_eval[1]
 
 ########
 # Main #
@@ -141,47 +141,55 @@ def main():
     bee_data = data("../Data/bee_data.csv", 5, "../Data/resized_bee_imgs") # Column 5 = Species
     num_classes = len(np.unique(bee_data.bee_targets))
     # Set hyperparameters
-    training_epochs = 100
-    runs = 3
-    learning_rates = [1e-2, 1e-6]
-    training_batch_sizes = [32]
-    hyperparameters = list(itertools.product(learning_rates, training_batch_sizes))
+    hyperparameters = list(itertools.product(LRATES, BSIZES))
     # Configure models
     acc_models = np.empty(len(hyperparameters))
     # Histories
     all_histories = np.empty(len(hyperparameters), dtype = object)
     # Find best combination of hyperparameters
+    print("Beginning grid search...")
     for i in range(len(hyperparameters)):
-        histories = np.empty(runs, dtype = object)
-        evals = np.empty(runs, dtype = object)
-        for run in range(runs):
-            model = make_conv_model(hyperparameters[i][0])
-            history = train_model(model, bee_data.training_data,
-                one_hot(bee_data.training_targets, num_classes),
-                hyperparameters[i][1], training_epochs)
-            eval = eval_model(model, bee_data.validation_data,
-                one_hot(bee_data.validation_targets, num_classes))
+        histories = np.empty(RUNS, dtype = object)
+        evals = np.empty(RUNS, dtype = object)
+        # Run RUN number of times
+        for run in range(RUNS):
+            print(">> Run #", run)
+            # Run either ANN or CNN
+            if MODE == 0:
+                model = make_model(hyperparameters[i][0])
+            else:
+                model = make_conv_model(hyperparameters[i][0])
+            # Train the model
+            print(">>>> Training model with learning rate = " + str(hyperparameters[i][1]) + "...")
+            history = train_model(model, bee_data.training_data, one_hot(bee_data.training_targets, num_classes),
+                hyperparameters[i][1], EPOCHS)
             histories[run] = history
-            evals[run] = eval
+            # Evaluate the model
+            print(">>>> Evaluating model...")
+            eval = eval_model(model, bee_data.validation_data, one_hot(bee_data.validation_targets, num_classes))
+            evals[run] = np.array(eval)
+        # Plot the training performance
         plot_training(histories)
+        # Data collection
         all_histories[i] = histories
-        acc_models[i] = ave_evals(evals)
+        acc_models[i] = avg_evals(evals)
     # Plot histories
-    print("Display learning curves over hyperparameter sets")
     plot_all_training(all_histories)
     # Output best model
     index_max = np.argmax(acc_models)
-    print("Best model: ", hyperparameters[index_max])
-    print("Best model acc: ", acc_models[index_max])
+    print("Best model from all runs: ", hyperparameters[index_max])
+    print("Best model accuracy from all runs: ", acc_models[index_max])
     # Make model with best combination, train with train and valid set, then test
-    training_epochs = 100
+    print("Training new model with best found hyperparameters...")
     model = make_conv_model(hyperparameters[index_max][0])
-    history = train_model(model, bee_data.training_data,
-        one_hot(bee_data.training_targets, num_classes), hyperparameters[index_max][1],
-        training_epochs, graph = True)
+    # Train model
+    history = train_model(model, bee_data.full_training_data, one_hot(bee_data.full_training_targets, num_classes),
+        hyperparameters[index_max][1], EPOCHS, graph = True)
+    # Evaluate model
+    print("Evaluating new model...")
     eval = eval_model(model, bee_data.testing_data, one_hot(bee_data.testing_targets, num_classes))
     # Output test performance
-    print("Evaluation on Test: ", eval)
+    print("Performance on testing data:", eval)
 
 if __name__ == "__main__":
     main()
