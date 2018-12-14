@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Dense, Flatten, Activation, Conv2D, MaxPooling2D
+from keras.layers import Flatten, BatchNormalization, Dense, Activation, Conv2D, MaxPooling2D
 from keras import metrics
 import tensorflow as tf
 from tensorflow import keras
@@ -15,8 +15,8 @@ from keras.optimizers import SGD
 # Mode: 0 = ANN, 1 = CNN
 MODE = 0
 EPOCHS = 50
-RUNS = 1
-LRATES = [1e-4, 1e-10, 1e-14, 1e-18]
+RUNS = 3
+LRATES = [1e-4, 1e-5, 1e-6, 1e-7]
 BSIZES = [32]
 
 #########
@@ -28,10 +28,11 @@ def make_model(learning_rate):
     model = Sequential()
     # Flatten layer
     model.add(Flatten())
-    # 4 dense layers (64, 64, 64, 7)
+    # Batch normalization layer
+    model.add(BatchNormalization())
+    # 4 dense layers (64, 64, 64, 7) including 1 custom layer
     model.add(ann_dense(64))
     model.add(Dense(units=64, activation='relu', input_shape=(77, 66, 3,))) # add input layer
-    #model.add(Dense(units=64, activation='relu')) # add layer
     model.add(Dense(units=64, activation='relu')) # add layer
     model.add(Dense(units=7, activation='sigmoid')) # add output layer
     model.add(Activation('softmax'))
@@ -94,23 +95,25 @@ def class_composition(targets):
 # Visualization #
 #################
 # Plot one training
-def plot_training(histories, graph = False):
+def plot_training(histories, lr, graph = False):
     # Iterate through each metric in the history
     for metric in histories[0].history.keys():
         total_metric = np.array([np.asarray(histories[0].history[metric])])
         for i in np.arange(1, len(histories)):
             total_metric = np.concatenate((total_metric, np.array([np.asarray(histories[i].history[metric])])), axis = 0)
-        ave_metric = np.average(total_metric, axis = 0)
+        avg_metric = np.average(total_metric, axis = 0)
         # Graph is specified
         if graph:
-            plt.plot(ave_metric)
-            plt.title("Average Model " + str(metric))
+            plt.plot(avg_metric)
+            plt.title("Average Model " + str(metric).upper() + " for LR = " + str(lr))
             plt.ylabel(metric)
             plt.xlabel("Epoch")
+            plt.legend()
             plt.show()
 
 # Plot all training
 def plot_all_training(all_histories):
+    count = 0
     # Measure accuracy
     metric = 'acc'
     # Iterate through each history
@@ -118,13 +121,15 @@ def plot_all_training(all_histories):
         total_metric = np.array([np.asarray(histories[0].history[metric])])
         for i in np.arange(1, len(histories)):
             total_metric = np.concatenate((total_metric, np.array([np.asarray(histories[i].history[metric])])), axis = 0)
-        ave_metric = np.average(total_metric, axis = 0)
+        avg_metric = np.average(total_metric, axis = 0)
         # Plot
-        plt.plot(ave_metric)
+        plt.plot(avg_metric, label=str(LRATES[count]))
+        count += 1
     # Plot
-    plt.title("Average Model " + str(metric))
+    plt.title("Average Model " + str(metric).upper())
     plt.ylabel(metric)
     plt.xlabel("Epoch")
+    plt.legend()
     plt.show()
 
 # Average evaluations and accuracies
@@ -137,6 +142,9 @@ def avg_evals(evals):
 # Main #
 ########
 def main():
+    print("\n\n#########")
+    print("# BEGIN #")
+    print("#########\n\n")
     # Read data
     bee_data = data("../Data/bee_data.csv", 5, "../Data/resized_bee_imgs") # Column 5 = Species
     num_classes = len(np.unique(bee_data.bee_targets))
@@ -153,23 +161,27 @@ def main():
         evals = np.empty(RUNS, dtype = object)
         # Run RUN number of times
         for run in range(RUNS):
-            print(">> Run #", run)
+            print("\n----------")
+            print("Run #", run)
+            print("----------\n")
             # Run either ANN or CNN
             if MODE == 0:
                 model = make_model(hyperparameters[i][0])
             else:
                 model = make_conv_model(hyperparameters[i][0])
             # Train the model
-            print(">>>> Training model with learning rate = " + str(hyperparameters[i][1]) + "...")
+            print("\n--------------------------------------------------")
+            print("Training model with learning rate = " + str(hyperparameters[i][0]) + "...")
+            print("--------------------------------------------------\n")
             history = train_model(model, bee_data.training_data, one_hot(bee_data.training_targets, num_classes),
                 hyperparameters[i][1], EPOCHS)
             histories[run] = history
             # Evaluate the model
-            print(">>>> Evaluating model...")
+            print(">> Evaluating model...")
             eval = eval_model(model, bee_data.validation_data, one_hot(bee_data.validation_targets, num_classes))
             evals[run] = np.array(eval)
         # Plot the training performance
-        plot_training(histories)
+        plot_training(histories, LRATES[i])
         # Data collection
         all_histories[i] = histories
         acc_models[i] = avg_evals(evals)
@@ -177,19 +189,23 @@ def main():
     plot_all_training(all_histories)
     # Output best model
     index_max = np.argmax(acc_models)
+    print("\n##############################")
     print("Best model from all runs: ", hyperparameters[index_max])
     print("Best model accuracy from all runs: ", acc_models[index_max])
+    print("\n##############################\n")
     # Make model with best combination, train with train and valid set, then test
+    print("\n--------------------------------------------------")
     print("Training new model with best found hyperparameters...")
+    print("--------------------------------------------------\n")
     model = make_conv_model(hyperparameters[index_max][0])
     # Train model
     history = train_model(model, bee_data.full_training_data, one_hot(bee_data.full_training_targets, num_classes),
         hyperparameters[index_max][1], EPOCHS, graph = True)
     # Evaluate model
-    print("Evaluating new model...")
+    print(">> Evaluating new model...")
     eval = eval_model(model, bee_data.testing_data, one_hot(bee_data.testing_targets, num_classes))
     # Output test performance
-    print("Performance on testing data:", eval)
+    print(">> Performance on testing data:", eval)
 
 if __name__ == "__main__":
     main()
