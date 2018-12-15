@@ -12,7 +12,7 @@ class data:
         # Load data
         print("Loading data...")
         bee_targets, bee_imgs = self.load_from_array()
-        #bee_targets, bee_imgs = self.load_from_data(csv_path, img_path, target_feature)
+        #bee_targets, bee_imgs = self.load_from_data("../Data/bee_data.csv", "../Data/bee_imgs", 5)
         self.bee_targets = bee_targets
         self.bee_imgs = bee_imgs
         # Get classes
