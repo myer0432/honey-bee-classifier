@@ -17,7 +17,7 @@ from decimal import Decimal
 MODE = 0
 EPOCHS = 100
 RUNS = 2
-LRATES = [1e-4, 1e-5, 1e-5, 1e-6, 1e-7]
+LRATES = [1e-1, 1e-2, 1e-3, 1e-4, 1e-5]
 BSIZES = [32]
 
 #########
@@ -32,7 +32,7 @@ def make_model(learning_rate):
     # Batch normalization layer
     model.add(BatchNormalization())
     # 4 dense layers (64, 64, 64, 7) including 1 custom layer
-    model.add(ann_dense(64))
+    model.add(dense_custom_layer(64))
     model.add(Dense(units=64, activation='relu', input_shape=(77, 66, 3,))) # add input layer
     model.add(Dense(units=64, activation='relu')) # add layer
     model.add(Dense(units=7, activation='sigmoid')) # add output layer
@@ -157,8 +157,8 @@ def main():
     print("# BEGIN #")
     print("#########\n\n")
     # Read data
-    # bee_data = data() will load from numpy arrays
-    bee_data = data("../Data/bee_data.csv", "../Data/bee_imgs", 5) # Column 5 = Species
+    bee_data = data()
+    #bee_data = data("../Data/bee_data.csv", "../Data/bee_imgs", 5) # Column 5 = Species
     num_classes = len(np.unique(bee_data.bee_targets))
     # Set hyperparameters
     hyperparameters = list(itertools.product(LRATES, BSIZES))

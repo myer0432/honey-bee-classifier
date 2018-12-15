@@ -8,13 +8,11 @@ from random import shuffle
 # Data class designed to easily encapsulate data
 # For our supervised learning Honey Bee Classifier
 class data:
-    def __init__(self, csv_path = None, img_path = None, target_feature = None):
+    def __init__(self):
         # Load data
         print("Loading data...")
-        if csv_path == None:
-            bee_targets, bee_imgs = self.load_from_array()
-        else:
-            bee_targets, bee_imgs = self.load_from_data(csv_path, img_path, target_feature)
+        bee_targets, bee_imgs = self.load_from_array()
+        #bee_targets, bee_imgs = self.load_from_data(csv_path, img_path, target_feature)
         self.bee_targets = bee_targets
         self.bee_imgs = bee_imgs
         # Get classes
@@ -61,11 +59,12 @@ class data:
                         np_bee_imgs[i,j,k,l] = bee_imgs[i][j,k,l]
         # Save array
         np.save("bee_imgs_ndarray.npy", np_bee_imgs)
+        return bee_targets, bee_imgs
 
     # Load from previously generated numpy arrays
     def load_from_array(self):
-        np_bee_imgs = np.load("../Data/data_arrays/bee_imgs_ndarray.npy")
-        bee_targets = np.load("../Data/data_arrays/bee_targets_ndarray.npy")
+        np_bee_imgs = np.load("../Data/small_data_arrays/bee_imgs_ndarray.npy")
+        bee_targets = np.load("../Data/small_data_arrays/bee_targets_ndarray.npy")
         return bee_targets, np_bee_imgs
 
     # Get classes for target values
