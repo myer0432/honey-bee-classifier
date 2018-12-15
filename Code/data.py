@@ -8,10 +8,13 @@ from random import shuffle
 # Data class designed to easily encapsulate data
 # For our supervised learning Honey Bee Classifier
 class data:
-    def __init__(self, csv_path, target_feature, img_path):
+    def __init__(self, csv_path = None, img_path = None, target_feature = None):
         # Load data
         print("Loading data...")
-        bee_targets, bee_imgs = self.load_from_array()
+        if csv_path == None:
+            bee_targets, bee_imgs = self.load_from_array()
+        else:
+            bee_targets, bee_imgs = self.load_from_data(csv_path, img_path, target_feature)
         self.bee_targets = bee_targets
         self.bee_imgs = bee_imgs
         # Get classes

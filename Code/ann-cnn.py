@@ -157,7 +157,8 @@ def main():
     print("# BEGIN #")
     print("#########\n\n")
     # Read data
-    bee_data = data("../Data/bee_data.csv", 5, "../Data/resized_bee_imgs") # Column 5 = Species
+    # bee_data = data() will load from numpy arrays
+    bee_data = data("../Data/bee_data.csv", "../Data/bee_imgs", 5) # Column 5 = Species
     num_classes = len(np.unique(bee_data.bee_targets))
     # Set hyperparameters
     hyperparameters = list(itertools.product(LRATES, BSIZES))
