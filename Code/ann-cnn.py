@@ -8,16 +8,16 @@ import matplotlib.pyplot as plt
 from random import shuffle
 import matplotlib.pyplot as plt
 from data import data
-from ann_custom_layer import ann_dense
+from dense_custom_layer import dense_custom_layer
 import itertools
 from keras.optimizers import SGD
 from decimal import Decimal
 
 # Mode: 0 = ANN, 1 = CNN
 MODE = 0
-EPOCHS = 100
+EPOCHS = 200
 RUNS = 2
-LRATES = [1e-1, 1e-2, 1e-3, 1e-4, 1e-5]
+LRATES = [1e-1, 1e-2, 1e-3, 1e-4]
 BSIZES = [32]
 
 #########
