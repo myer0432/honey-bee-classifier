@@ -11,12 +11,13 @@ from data import data
 from ann_custom_layer import ann_dense
 import itertools
 from keras.optimizers import SGD
+from decimal import Decimal
 
 # Mode: 0 = ANN, 1 = CNN
 MODE = 0
-EPOCHS = 50
-RUNS = 3
-LRATES = [1e-4, 1e-5, 1e-6, 1e-7]
+EPOCHS = 100
+RUNS = 2
+LRATES = [1e-4, 1e-5, 1e-5, 1e-6, 1e-7]
 BSIZES = [32]
 
 #########
@@ -35,6 +36,7 @@ def make_model(learning_rate):
     model.add(Dense(units=64, activation='relu', input_shape=(77, 66, 3,))) # add input layer
     model.add(Dense(units=64, activation='relu')) # add layer
     model.add(Dense(units=7, activation='sigmoid')) # add output layer
+    # Activation layer
     model.add(Activation('softmax'))
     # Compile
     opt = SGD(lr = learning_rate)
@@ -63,15 +65,18 @@ def make_conv_model(learning_rate):
     return model
 
 # Train the model
-def train_model(model, x_train, y_train, training_batch_size, EPOCHS, graph = False):
+def train_model(model, x_train, y_train, training_batch_size, EPOCHS, lr, graph = False):
     # Fit the model
     history = model.fit(x_train, y_train, epochs = EPOCHS, batch_size = training_batch_size)
     # Graph the model if specified
     if graph:
         for metric in history.history.keys():
             plt.plot(history.history[metric])
-            plt.title("Model " + str(metric))
-            plt.ylabel(metric)
+            if MODE == 0:
+                plt.title("ANN Testing " + str(metric).capitalize() + " for LR = " + '%.2E' % Decimal(lr))
+            else:
+                plt.title("CNN Testing " + str(metric).capitalize() + " for LR = " + '%.2E' % Decimal(lr))
+            plt.ylabel(str(metric).capitalize())
             plt.xlabel("Epoch")
             plt.show()
     return history
@@ -105,32 +110,38 @@ def plot_training(histories, lr, graph = False):
         # Graph is specified
         if graph:
             plt.plot(avg_metric)
-            plt.title("Average Model " + str(metric).upper() + " for LR = " + str(lr))
-            plt.ylabel(metric)
+            if MODE == 0:
+                plt.title("Average ANN " + str(metric).capitalize() + " for LR = " + '%.2E' % Decimal(lr))
+            else:
+                plt.title("Average CNN " + str(metric).capitalize() + " for LR = " + '%.2E' % Decimal(lr))
+            plt.ylabel(str(metric).capitalize())
             plt.xlabel("Epoch")
             plt.legend()
             plt.show()
 
 # Plot all training
 def plot_all_training(all_histories):
-    count = 0
-    # Measure accuracy
-    metric = 'acc'
-    # Iterate through each history
-    for histories in all_histories:
-        total_metric = np.array([np.asarray(histories[0].history[metric])])
-        for i in np.arange(1, len(histories)):
-            total_metric = np.concatenate((total_metric, np.array([np.asarray(histories[i].history[metric])])), axis = 0)
-        avg_metric = np.average(total_metric, axis = 0)
+    metrics = ['acc', 'loss']
+    for metric in metrics:
+        # Iterate through each history
+        count = 0
+        for histories in all_histories:
+            total_metric = np.array([np.asarray(histories[0].history[metric])])
+            for i in np.arange(1, len(histories)):
+                total_metric = np.concatenate((total_metric, np.array([np.asarray(histories[i].history[metric])])), axis = 0)
+            avg_metric = np.average(total_metric, axis = 0)
+            # Plot
+            plt.plot(avg_metric, label=str('%.2E' % Decimal(LRATES[count])))
+            count += 1
         # Plot
-        plt.plot(avg_metric, label=str(LRATES[count]))
-        count += 1
-    # Plot
-    plt.title("Average Model " + str(metric).upper())
-    plt.ylabel(metric)
-    plt.xlabel("Epoch")
-    plt.legend()
-    plt.show()
+        if MODE == 0:
+            plt.title("Average ANN " + str(metric).capitalize())
+        else:
+            plt.title("Average CNN " + str(metric).capitalize())
+        plt.ylabel(str(metric).capitalize())
+        plt.xlabel("Epoch")
+        plt.legend()
+        plt.show()
 
 # Average evaluations and accuracies
 def avg_evals(evals):
@@ -159,22 +170,22 @@ def main():
     for i in range(len(hyperparameters)):
         histories = np.empty(RUNS, dtype = object)
         evals = np.empty(RUNS, dtype = object)
+        print("\n--------------------------------------------------")
+        print("Training model with learning rate = " + '%.2E' % Decimal(hyperparameters[i][0]) + "...")
+        print("--------------------------------------------------")
         # Run RUN number of times
         for run in range(RUNS):
-            print("\n----------")
-            print("Run #", run)
-            print("----------\n")
+            print("\n------------------------------")
+            print("Run #" + str(run) + " for LR = " + '%.2E' % Decimal(hyperparameters[i][0]))
+            print("------------------------------\n")
             # Run either ANN or CNN
             if MODE == 0:
                 model = make_model(hyperparameters[i][0])
             else:
                 model = make_conv_model(hyperparameters[i][0])
             # Train the model
-            print("\n--------------------------------------------------")
-            print("Training model with learning rate = " + str(hyperparameters[i][0]) + "...")
-            print("--------------------------------------------------\n")
             history = train_model(model, bee_data.training_data, one_hot(bee_data.training_targets, num_classes),
-                hyperparameters[i][1], EPOCHS)
+                hyperparameters[i][1], EPOCHS, hyperparameters[i][0])
             histories[run] = history
             # Evaluate the model
             print(">> Evaluating model...")
@@ -197,10 +208,13 @@ def main():
     print("\n--------------------------------------------------")
     print("Training new model with best found hyperparameters...")
     print("--------------------------------------------------\n")
-    model = make_conv_model(hyperparameters[index_max][0])
+    if MODE == 0:
+        model = make_model(hyperparameters[index_max][0])
+    else:
+        model = make_conv_model(hyperparameters[index_max][0])
     # Train model
-    history = train_model(model, bee_data.full_training_data, one_hot(bee_data.full_training_targets, num_classes),
-        hyperparameters[index_max][1], EPOCHS, graph = True)
+    history = train_model(model, bee_data.training_data, one_hot(bee_data.training_targets, num_classes),
+        hyperparameters[index_max][1], EPOCHS, hyperparameters[index_max][0], graph = True)
     # Evaluate model
     print(">> Evaluating new model...")
     eval = eval_model(model, bee_data.testing_data, one_hot(bee_data.testing_targets, num_classes))
