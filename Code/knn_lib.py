@@ -39,8 +39,26 @@ def knn(k, unknown_samples, known_samples, unknown_labels, known_labels):
 
     '''
     t = np.linspace(0, final_distance.shape[1], final_distance.shape[1])
+
+    fig1 = plt.figure(1)
+    plt.plot(t, final_distance[0,:])
+    plt.title("Final distance")
+    fig1.show()
+    
+    fig2 = plt.figure(2)
+    plt.plot(t, known_labels[:])
+    plt.title("Labels")
+    fig2.show()
+
+    fig3 = plt.figure(3)
     plt.plot(t, sorted_final_distance[0,:])
-    plt.show()
+    plt.title("Final sorted distance")
+    fig3.show()
+
+    fig4 = plt.figure(4)
+    plt.plot(t, sorted_labels[0,:])
+    plt.title("Sorted labels")
+    fig4.show()
     '''
 
     print(type(sorted_labels))
@@ -49,31 +67,65 @@ def knn(k, unknown_samples, known_samples, unknown_labels, known_labels):
     # 7 possible classes
     bins = np.zeros((unknown_samples.shape[0],7), dtype=np.int32)
     predictions = np.zeros(unknown_samples.shape[0], dtype=np.int32)
+    print("This is k:", k)
     for i in range(sorted_final_distance.shape[0]):
         if k == 0:
             k = 1
+        sum = 0
         for j in range(k):
             label = sorted_labels[i,j]
             if label == -1:
-                bins[0] += 1
+                bins[i,0] += 1
             elif label == 0:
-                bins[1] += 1
+                bins[i,1] += 1
             elif label == 1:
-                bins[2] += 1
+                bins[i,2] += 1
             elif label == 2:
-                bins[3] += 1
+                bins[i,3] += 1
             elif label == 3:
-                bins[4] += 1
+                bins[i,4] += 1
             elif label == 4:
-                bins[5] += 1
+                bins[i,5] += 1
             elif label == 5:
-                bins[6] += 1
-    
+                bins[i,6] += 1
+            sum += 1
+        print("Bin sum:", sum)
+
+    '''
+    t = np.linspace(-1, 5, bins.shape[1])
+    fig5 = plt.figure(5)
+    plt.plot(t, bins[0,:])
+    plt.title("Bin 0")
+    fig5.show()
+
+    fig6 = plt.figure(6)
+    plt.plot(t, bins[1,:])
+    plt.title("Bin 1")
+    fig6.show()
+
+    fig7 = plt.figure(7)
+    plt.plot(t, bins[2,:])
+    plt.title("Bin 2")
+    fig7.show()
+    '''
+
     argmaxes = np.argmax(bins, axis=1)
-    
+    print("Argmaxes shape:", argmaxes.shape)
+
+
     for i in range(argmaxes.shape[0]):
         predictions[i] = argmaxes[i]-1
     
+    t = np.linspace(0, predictions.shape[0], predictions.shape[0])
+    
+    '''
+    fig8 = plt.figure(8)
+    plt.plot(t, predictions)
+    plt.title("Predictions")
+    fig8.show()
+
+    plt.show()
+    '''
 
     return predictions
     
